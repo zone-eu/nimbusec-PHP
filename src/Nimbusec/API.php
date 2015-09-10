@@ -1,10 +1,10 @@
 <?php namespace ZoneEU\Nimbusec;
 
-use namespace ZoneEU\Nimbusec\Oauth\Consumer as OAuthConsumer;
-use namespace ZoneEU\Nimbusec\Oauth\Request as OAuthRequest;
-use namespace ZoneEU\Nimbusec\Oauth\SignatureMethod;
+use ZoneEU\Nimbusec\OAuth\Consumer as OAuthConsumer;
+use ZoneEU\Nimbusec\OAuth\Request as OAuthRequest;
+use ZoneEU\Nimbusec\OAuth\SignatureMethod;
 
-use namespace ZoneEU\Nimbusec\CURL\Client as CURLClient;
+use ZoneEU\Nimbusec\CURL\Client as CURLClient;
 
 /**
  * The official Nimbusec API client written in PHP. 
@@ -47,10 +47,10 @@ class API {
         // -- If no URL was passed, use default --
         if ( !empty ( $BASE_URL ) )
             $this->DEFAULT_BASE_URL = $BASE_URL;
-            
+           
         // -- Create an OAuth consumer based on the given credentials --
         $this->consumer = new OAuthConsumer ( $key, $secret );
-        
+
         // -- Create new cURL instance --
         $this->client = new CURLClient ();
     }

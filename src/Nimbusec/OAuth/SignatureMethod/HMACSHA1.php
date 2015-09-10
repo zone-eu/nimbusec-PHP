@@ -1,9 +1,11 @@
-<?php namespace ZoneEU\Nimbusec\Oauth\SignatureMethod;
+<?php namespace ZoneEU\Nimbusec\OAuth\SignatureMethod;
 
-use ZoneEU\Nimusec\Oauth;
+use ZoneEU\Nimbusec\OAuth;
+use ZoneEU\Nimbusec\OAuth\Util;
 
-class HMACSHA1 extends SignatureMethod {
-  function get_name() {
+class HMACSHA1 extends OAuth\SignatureMethod {
+
+  public function get_name() {
     return "HMAC-SHA1";
   }
 

@@ -1,6 +1,6 @@
-<?php namespace ZoneEU\Nimbusec\Oauth;
+<?php namespace ZoneEU\Nimbusec\OAuth;
 
-class SignatureMethod {
+abstract class SignatureMethod {
   /**
    * Needs to return the name of the Signature Method (ie HMAC-SHA1)
    * @return string
