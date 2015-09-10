@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\Oauth\SignatureMethod
+<?php namespace ZoneEU\Nimbusec\Oauth\SignatureMethod;
 
 use ZoneEU\Nimusec\Oauth;
 

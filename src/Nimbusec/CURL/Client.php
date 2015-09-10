@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\CURL
+<?php namespace ZoneEU\Nimbusec\CURL;
 
 class Client {
 

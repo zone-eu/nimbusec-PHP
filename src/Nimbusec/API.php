@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec
+<?php namespace ZoneEU\Nimbusec;
 
 use namespace ZoneEU\Nimbusec\Oauth\Consumer as OAuthConsumer;
 use namespace ZoneEU\Nimbusec\Oauth\Request as OAuthRequest;

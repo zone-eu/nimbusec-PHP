@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\Oauth
+<?php namespace ZoneEU\Nimbusec\Oauth;
 
 class Util {
   public static function urlencode_rfc3986($input) {

@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec
+<?php namespace ZoneEU\Nimbusec;
 
 class Exception extends \Exception {
     // pass

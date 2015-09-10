@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\Oauth
+<?php namespace ZoneEU\Nimbusec\Oauth;
 
 class Token {
   // access tokens and request tokens

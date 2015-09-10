@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\Oauth
+<?php namespace ZoneEU\Nimbusec\Oauth;
 
 class Server {
   protected $timestamp_threshold = 300; // in seconds, five minutes
