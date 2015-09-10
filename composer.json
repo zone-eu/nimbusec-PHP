@@ -1,0 +1,23 @@
+{
+    "name": "zone-eu/nimbusec-php",
+    "description": "Fork of the official Nimbusec API client written in PHP - migrated to use composer",
+    "license": "MIT",
+    "homepage": "https://nimbusec.com",
+    "authors": [
+        {
+            "name" : "2015 Cumulo Information System Security GmbH"
+        },
+        {
+            "name": "Zone Media OÜ",
+            "email": "developers@zone.ee"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ZoneEU\\Nimbusec\\": "src/Nimbusec/"
+        }
+    }
+}
