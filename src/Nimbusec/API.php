@@ -185,7 +185,7 @@ class API {
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'DELETE', $url );
         
         // -- Make signed OAuth request to contact API server --
-        $request->sign_request ( new SignatureMethod\HMAC\SHA1 (), $this->consumer, NULL );
+        $request->sign_request ( new SignatureMethod\HMACSHA1 (), $this->consumer, NULL );
         
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
