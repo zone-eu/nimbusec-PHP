@@ -1,8 +1,9 @@
-<?php namespace ZoneEU\Nimbusec\Oauth\SignatureMethod;
+<?php namespace ZoneEU\Nimbusec\OAuth\SignatureMethod;
 
-use ZoneEU\Nimusec\Oauth;
+use ZoneEU\Nimbusec\OAuth;
+use ZoneEU\Nimbusec\OAuth\Util;
 
-class RSASHA1 extends SignatureMethod {
+class RSASHA1 extends OAuth\SignatureMethod {
 
   public function get_name() {
     return "RSA-SHA1";

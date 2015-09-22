@@ -1,4 +1,4 @@
-<?php namespace ZoneEU\Nimbusec\Oauth;
+<?php namespace ZoneEU\Nimbusec\OAuth;
 
 class DataStore {
   function lookup_consumer($consumer_key) {
