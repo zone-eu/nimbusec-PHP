@@ -1,8 +1,8 @@
 <?php namespace ZoneEU\Nimbusec;
 
-use ZoneEU\Nimbusec\Oauth\Consumer as OAuthConsumer;
-use ZoneEU\Nimbusec\Oauth\Request as OAuthRequest;
-use ZoneEU\Nimbusec\Oauth\SignatureMethod;
+use ZoneEU\Nimbusec\OAuth\Consumer as OAuthConsumer;
+use ZoneEU\Nimbusec\OAuth\Request as OAuthRequest;
+use ZoneEU\Nimbusec\OAuth\SignatureMethod;
 
 use ZoneEU\Nimbusec\CURL\Client as CURLClient;
 
