@@ -1,10 +1,10 @@
 <?php namespace ZoneEU\Nimbusec;
 
-use namespace ZoneEU\Nimbusec\Oauth\Consumer as OAuthConsumer;
-use namespace ZoneEU\Nimbusec\Oauth\Request as OAuthRequest;
-use namespace ZoneEU\Nimbusec\Oauth\SignatureMethod;
+use ZoneEU\Nimbusec\Oauth\Consumer as OAuthConsumer;
+use ZoneEU\Nimbusec\Oauth\Request as OAuthRequest;
+use ZoneEU\Nimbusec\Oauth\SignatureMethod;
 
-use namespace ZoneEU\Nimbusec\CURL\Client as CURLClient;
+use ZoneEU\Nimbusec\CURL\Client as CURLClient;
 
 /**
  * The official Nimbusec API client written in PHP. 
