@@ -197,6 +197,110 @@ class API {
     }
 
     /**
+     * Read all detected results for all domains.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
+     * missing or left blank.</i>
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - A nested array containing all result objects
+     */
+    function findResults( $domainID, $filter = null ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/result";
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+        
+        // -- Check if filter was passed; if so, append to params --
+        if ( !empty ( $filter ) ) {
+            $request->set_parameter ( 'q', $filter );
+        }
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new SignatureMethod\HMACSHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+    
+        // -- Run the cUrl request --
+        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+        $results = json_decode ( $response, true );
+        $err = $this->json_last_error_msg_dep ();
+        if ( !empty ( $err ) )
+            throw new Exception ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
+        else
+            return $results;
+    }
+
+    /**
+     * Reads a specific result for a certain domain.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @param int $resultID - The result's assigned ID (must be valid)
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - A nested array containing all result objects
+     */
+    function findSpecificResult( $domainID, $resultID ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/result/" . $resultID;
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new SignatureMethod\HMACSHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+    
+        // -- Run the cUrl request --
+        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+        $result = json_decode ( $response, true );
+        $err = $this->json_last_error_msg_dep ();
+        if ( !empty ( $err ) )
+            throw new Exception ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
+        else
+            return $result;
+    }
+    
+    /**
+     * Read all detected applications for a certain domain.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - An array containing all applications found for the domain.
+     */
+    function findApplications( $domainID ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/applications";
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new SignatureMethod\HMACSHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+        
+        // -- Run the cUrl request --
+        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+        $applications = json_decode ( $response, true );
+        $err = $this->json_last_error_msg_dep ();
+        if ( !empty ( $err ) )
+            throw new Exception ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
+        else
+            return $applications;
+    }
+
+    /**
      * Read all existing bundles depending on an optional filter.
      *
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
