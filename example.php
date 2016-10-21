@@ -11,14 +11,22 @@
     // -- Create a new instance of the API client --
     $apiInstance = new NimbusecAPI ( $NIMBUSEC_KEY, $NIMBUSEC_SECRET );
     
-    // -- List all domains --
-    echo $apiInstance->findDomains ();
+    // -- List all domains + Exception Handling--
+    try {
+        echo $apiInstance->findDomains ();
+    }catch (Exception $e){
+        echo $e->getMessage();
+    }
     
-    // -- Get a specific domain --
-    echo $apiInstance->findDomains ( "name=\"www.nimbusec.com\"" );
+    // -- Search for a specific domain --
+    $domains = $apiInstance->findDomains ( "name=\"www.nimbusec.com\"" );
+    $domainID = $domains[0]['id'];
+    
+    // -- Find CMS concerned results for a specific domain --
+    echo $apiInstance->findResults( $domainID, "event=\cms-vulnerable\"");
     
     // -- Create a new domain --
-    $domain = array (
+    $newDomain = array (
             "scheme" => "https",
             "name" => "www.somedomain.com",
             "deepScan" => "https://www.somedomain.com",
@@ -28,11 +36,11 @@
             "bundle" => "--- BUNDLE ID ---"
     );
     
-    echo $apiInstance->createDomain ( $domain );
+    echo $apiInstance->createDomain ( $newDomain );
     
-    // -- Get id of a specific user --
-    $user = $apiInstance->findUsers ( "login=\"someone@example.com\"" );
-    $id = $user['id'];
+    // -- Search for a specific user --
+    $users = $apiInstance->findUsers ( "login=\"someone@example.com\"" );
+    $userID = $users[0]['id'];
     
     // -- Update the fetched user --
     $userUpdate = array (
@@ -41,9 +49,9 @@
             "forename" => "Max"
     );
     
-    echo $apiInstance->updateUser ( $id, $userUpdate );
+    echo $apiInstance->updateUser ( $userID, $userUpdate );
     
     // -- Delete the user --
-    $apiInstance->deleteUser ( $id );
+    $apiInstance->deleteUser ( $userID );
 
 ?>

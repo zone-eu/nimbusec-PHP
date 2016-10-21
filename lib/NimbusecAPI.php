@@ -12,7 +12,7 @@ require_once ('CURLClient.php');
  * </ul>
  * 
  * All objects being passed as method parameters must be non-JSON associative arrays as they'll be encoded / decoded and later on send to the server within the method. 
- * Otherwise an exception from type NimbusecException will be thrown. 
+ * Otherwise an exception will be thrown. 
  * 
  * Please note that this API client may not be complete as for the possible operations described in the Nimbusec API documentation. The API client will be expanded when additional features are needed.
  * 
@@ -41,8 +41,9 @@ class NimbusecAPI {
     function __construct ( $key, $secret, $BASE_URL = null ) {
         
         // -- If no URL was passed, use default --
-        if ( !empty ( $BASE_URL ) )
+        if ( !empty ( $BASE_URL ) ) {
             $this->DEFAULT_BASE_URL = $BASE_URL;
+        }
             
         // -- Create an OAuth consumer based on the given credentials --
         $this->consumer = new OAuthConsumer ( $key, $secret );
@@ -55,15 +56,16 @@ class NimbusecAPI {
      * Create a domain from the given object.
      *
      * @param array $domain - The array of the domain to be created
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The created domain object
      */
     function createDomain ( $domain ) {
 
         $payload = json_encode ( $domain );
         $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
+        if ( !empty ( $err ) ) {
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
+        }
             
         // -- Domain base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/domain";
@@ -77,15 +79,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $domain = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $domain;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+             
+            $domain = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ){
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            }else {
+                return $domain;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -93,7 +100,7 @@ class NimbusecAPI {
      *
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all domain objects
      */
     function findDomains ( $filter = null ) {
@@ -105,8 +112,9 @@ class NimbusecAPI {
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
         
         // -- Check if filter was passed; if so, append to params --
-        if ( !empty ( $filter ) )
+        if ( !empty ( $filter ) ) {
             $request->set_parameter ( 'q', $filter );
+        }    
             
         // -- Make signed OAuth request to contact API server --
         $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
@@ -114,15 +122,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $domains = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $domains;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $domains = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $domains;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -131,15 +144,16 @@ class NimbusecAPI {
      *
      * @param int $domainID - The domain's assigned ID (must be valid)
      * @param array $domain - The domain object with the fields to be updated
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The updated domain object
      */
     function updateDomain ( $domainID, $domain ) {
 
         $payload = json_encode ( $domain );
         $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
+        if ( !empty ( $err ) ) {
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
+        }
         
         // -- Domain base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID;
@@ -153,15 +167,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $domain = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $domain;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+            
+            $domain = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $domain;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -169,7 +188,8 @@ class NimbusecAPI {
      * The destination path for the request is determined by the ID.
      * 
      * No return value.
-     * 
+     *
+     * @throws Exception When having troubles while sending the curl request
      * @param int $domainID - The domain's assigned ID (must be valid)
      */
     function deleteDomain ( $domainID ) {
@@ -186,10 +206,133 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cURL request --
-        // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
-        //    through "substr" which for its part fails it returns boolean false --
-        $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        try {
+            // -- Run the cURL request --
+            // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
+            //    through "substr" which for its part fails it returns boolean false --
+            $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
+    }
+    
+    /**
+     * Read all detected results for all domains.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
+     * missing or left blank.</i>
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - A nested array containing all result objects
+     */
+    function findResults( $domainID, $filter = null ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/result";
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+        
+        // -- Check if filter was passed; if so, append to params --
+        if ( !empty ( $filter ) ) {
+            $request->set_parameter ( 'q', $filter );
+        }
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+    
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+            $results = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $results;
+            }   
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Reads a specific result for a certain domain.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @param int $resultID - The result's assigned ID (must be valid)
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - A nested array containing all result objects
+     */
+    function findSpecificResult( $domainID, $resultID ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/result/" . $resultID;
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+    
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+            $result = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $result;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
+    }
+    
+    /**
+     * Read all detected applications for a certain domain.
+     *
+     * @param int $domainID - The domain's assigned ID (must be valid)
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
+     * @return array - An array containing all applications found for the domain.
+     */
+    function findApplications( $domainID ){
+    
+        // -- User Configuration base path --
+        $url = $this->DEFAULT_BASE_URL . "/v2/domain/" . $domainID . "/applications";
+    
+        // -- Create OAuth request based on OAuth consumer and the specific url --
+        $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
+    
+        // -- Make signed OAuth request to contact API server --
+        $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
+    
+        // -- Get the usable url for the request --
+        $requestUrl = $request->to_url ();
+    
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        
+            $applications = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $applications;
+            }   
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -197,7 +340,7 @@ class NimbusecAPI {
      *
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all bundle objects
      */
     function findBundles ( $filter = null ) {
@@ -208,8 +351,9 @@ class NimbusecAPI {
         // -- Create OAuth request based on OAuth consumer and the specific url --
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
         
-        if ( !empty ( $filter ) )
+        if ( !empty ( $filter ) ) {
             $request->set_parameter ( 'q', $filter );
+        }
             
         // -- Make signed OAuth request to contact API server --
         $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
@@ -217,31 +361,36 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $bundles = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $bundles;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $bundles = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $bundles;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
      * Create a user from the given object.
      *
      * @param array $user - The array of the user to be created
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The created user object
      */
     function createUser ( $user ) {
 
         $payload = json_encode ( $user );
         $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
-        
+        if ( !empty ( $err ) ) {
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
+        }
         // -- User base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/user";
         
@@ -254,15 +403,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $user = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $user;
+        try {            
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+            
+            $user = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $user;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -270,7 +424,7 @@ class NimbusecAPI {
      *
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all user objects
      */
     function findUsers ( $filter = null ) {
@@ -282,8 +436,9 @@ class NimbusecAPI {
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
         
         // -- Check if filter was passed; if so, append to params --
-        if ( !empty ( $filter ) )
+        if ( !empty ( $filter ) ) {
             $request->set_parameter ( 'q', $filter );
+        }
             
         // -- Make signed OAuth request to contact API server --
         $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
@@ -291,15 +446,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $users = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $users;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $users = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $users;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -308,15 +468,16 @@ class NimbusecAPI {
      *
      * @param int $userID - The user's assigned ID (must be valid)
      * @param array $user - The user object with the fields to be updated
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The updated user object
      */
     function updateUser ( $userID, $user ) {
 
         $payload = json_encode ( $user );
         $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
+        if ( !empty ( $err ) ) {
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
+        }
         
         // -- User base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/user/" . $userID;
@@ -330,15 +491,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $user = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $user;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+            
+            $user = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $user;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -347,6 +513,7 @@ class NimbusecAPI {
      *  
      * No return value.
      * 
+     * @throws Exception When having troubles while sending the curl request
      * @param int $userID - The user's assigned ID (must be valid)
      */
     function deleteUser ( $userID ) {
@@ -363,17 +530,21 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
-        //    through "substr" which for its part fails it returns boolean false --
-        $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        try {
+            // -- Run the cUrl request --
+            // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
+            //    through "substr" which for its part fails it returns boolean false --
+            $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
     
     /**
      * Read all configurations set of a certain user. 
      * 
      * @param int $userID - The user's assigned ID (must be valid)
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - An array containing all configuration keys without the corresponding value (See <b>findSpecificUserConfiguration</b> for that).
      */
     function findUserConfigurations( $userID ){
@@ -390,15 +561,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $userConfigs = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $userConfigs;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $userConfigs = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $userConfigs;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
     
     /**
@@ -406,6 +582,7 @@ class NimbusecAPI {
      * 
      * @param int $userID - The user's assigned ID (must be valid)
      * @param string $key - The key of the configuration to be read
+     * @throws Exception When having troubles while sending the curl request
      * @return string - The value of the configuration
      */
     function findSpecificUserConfiguration( $userID, $key ) {
@@ -422,10 +599,13 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        return $response;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );    
+            return $response;
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
     
     /**
@@ -434,6 +614,7 @@ class NimbusecAPI {
      * @param int $userID - The user's assigned ID (must be valid)
      * @param string $key - The name of the configuration to be changed
      * @param string $value - The value to be set being sent as plain text to the API
+     * @throws Exception When having troubles while sending the curl request
      * @return string - The updated configuration value
      */
     function setUserConfiguration( $userID, $key, $value ) {
@@ -450,10 +631,13 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $value );
-        
-        return $response;    
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $value );
+            return $response;    
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
     
     /**
@@ -463,6 +647,7 @@ class NimbusecAPI {
      * 
      * @param int $userID - The user's assigned ID (must be valid)
      * @param string $key - The key of the configuration to be deleted
+     * @throws Exception When having troubles while sending the curl request
      */
     function deleteUserConfiguration( $userID, $key ) {
     
@@ -477,11 +662,14 @@ class NimbusecAPI {
         
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
-        
-        // -- Run the cUrl request --
-        // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
-        //    through "substr" which for its part fails it returns boolean false --
-        $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        try {
+            // -- Run the cUrl request --
+            // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
+            //    through "substr" which for its part fails it returns boolean false --
+            $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -489,15 +677,16 @@ class NimbusecAPI {
      *
      * @param array $notification - The array of the notification to be created
      * @param int | string $userID - The user's assigned ID (must be valid)
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The created notification object
      */
     function createNotification ( $notification, $userID ) {
 
         $payload = json_encode ( $notification );
         $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
+        if ( !empty ( $err ) ) {
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
+        }
         
         // -- Notification base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/user/{$userID}/notification";
@@ -511,15 +700,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $notification = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $notification;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+            
+            $notification = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $notification;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -528,7 +722,7 @@ class NimbusecAPI {
      * @param int | string $userID - The user's assigned ID (must be valid)
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all notification objects
      */
     function findNotifications ( $userID, $filter = null ) {
@@ -549,15 +743,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $notifications = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $notifications;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $notifications = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            }else {
+                return $notifications;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -565,7 +764,7 @@ class NimbusecAPI {
      *
      * @param int | string $userID - The user's assigned id (must be valid)
      * @param int | string $domainID - The domain's assigned id (must be valid)
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing a list of domain id's
      */
     function createDomainSet ( $userID, $domainID ) {
@@ -582,22 +781,27 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, NULL, $domainID );
-        
-        $domainSet = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $domainSet;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, NULL, $domainID );
+            
+            $domainSet = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $domainSet;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
      * Read all assigned domains of a certain user.
      *
      * @param int | string $userID - The user's assigned id
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing a list of domain id's
      */
     function findDomainSet ( $userID ) {
@@ -614,15 +818,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $domainSet = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $domainSet;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $domainSet = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $domainSet;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -632,7 +841,7 @@ class NimbusecAPI {
      *
      * @param int | string $userID - The user's assigned id (must be valid)
      * @param int | string $domainID - The domain's assigned id (must be valid)
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      */
     function deleteFromDomainSet ( $userID, $domainID ) {
 
@@ -648,10 +857,14 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
-        //    through "substr" which for its part fails it returns boolean false --
-        $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        try {
+            // -- Run the cUrl request --
+            // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
+            //    through "substr" which for its part fails it returns boolean false --
+            $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );    
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -659,7 +872,7 @@ class NimbusecAPI {
      * 
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all serveragent objects
      */
     function findServerAgents ( $filter = null ) {
@@ -671,8 +884,9 @@ class NimbusecAPI {
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
         
         // -- Check if filter was passed; if so, append to params --
-        if ( !empty ( $filter ) )
+        if ( !empty ( $filter ) ) {
             $request->set_parameter ( 'q', $filter );
+        }
             
         // -- Make signed OAuth request to contact API server --
         $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
@@ -680,15 +894,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $serverAgents = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $serverAgents;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $serverAgents = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $serverAgents;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -696,13 +915,14 @@ class NimbusecAPI {
      * 
      * @param string $os - Operating system of agent (windows, macosx, linux)
      * @param string $arch - CPU architecture of agent (32bit, 64bit)
-     * @param string $version - Version of agent
+     * @param int $version - Version of agent
      * @param string $type - Format of downloaded file (zip, bin). Default value is zip.
+     * @throws Exception When having troubles while sending the curl request
      * @return string - Depending on the given format, the server agent as string
      */
     function findSpecificServerAgent ( $os, $arch, $version, $type = "zip" ) {
 
-        $url = $this->DEFAULT_BASE_URL . "/v2/agent/download/nimbusagent-{$os}-{$arch}-{$version}.{$type}";
+        $url = $this->DEFAULT_BASE_URL . "/v2/agent/download/nimbusagent-{$os}-{$arch}-v{$version}.{$type}";
         
         // -- Create OAuth request based on OAuth consumer and the specific url --
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
@@ -713,10 +933,13 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        return $response;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            return $response;
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -724,7 +947,7 @@ class NimbusecAPI {
      * In the following step this token can be used to run the server agent.
      *
      * @param array $token - The array of the token to be created
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - The created token object
      */
     function createAgentToken ( $token ) {
@@ -732,7 +955,7 @@ class NimbusecAPI {
         $payload = json_encode ( $token );
         $err = $this->json_last_error_msg_dep ();
         if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error ocurred '{$err}' while encoding" );
+            throw new Exception ( "[" . __METHOD__ . "]: JSON: an error ocurred '{$err}' while encoding" );
         
         // -- Token base path --
         $url = $this->DEFAULT_BASE_URL . "/v2/agent/token";
@@ -746,15 +969,20 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
-        
-        $token = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $token;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl, null, $payload );
+            
+            $token = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ){
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            }else {
+                return $token;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -762,7 +990,7 @@ class NimbusecAPI {
      *
      * @param string $filter - Defines the field + value to be filtered by. Filter format: <b>field="value"</b>.<br /><i>NOTE: the filter can be
      * missing or left blank.</i>
-     * @throws NimbusecException When an error occurs during JSON encoding / decoding process; <br/>Contains the <b>JSON error message</b>.
+     * @throws Exception When an error occurs during JSON encoding / decoding process or when facing invalid HTTP requests; <br/>Contains the <b>JSON error message</b>.
      * @return array - A nested array containing all token objects
      */
     function findAgentToken ( $filter = null ) {
@@ -773,24 +1001,30 @@ class NimbusecAPI {
         // -- Create OAuth request based on OAuth consumer and the specific url --
         $request = OAuthRequest::from_consumer_and_token ( $this->consumer, NULL, 'GET', $url );
         
-        if ( !empty ( $filter ) )
+        if ( !empty ( $filter ) ) {
             $request->set_parameter ( 'q', $filter );
+        }
             
-            // -- Make signed OAuth request to contact API server --
+        // -- Make signed OAuth request to contact API server --
         $request->sign_request ( new OAuthSignatureMethod_HMAC_SHA1 (), $this->consumer, NULL );
         
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
-        
-        $tokens = json_decode ( $response, true );
-        $err = $this->json_last_error_msg_dep ();
-        if ( !empty ( $err ) )
-            throw new NimbusecException ( "JSON: an error occured '{$err}' while trying to decode {$response}" );
-        else
-            return $tokens;
+        try {
+            // -- Run the cUrl request --
+            $response = $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+            
+            $tokens = json_decode ( $response, true );
+            $err = $this->json_last_error_msg_dep ();
+            if ( !empty ( $err ) ) {
+                throw new Exception ( "[" . __METHOD__ . "]: JSON: an error occured '{$err}' while trying to decode {$response}" );
+            } else {
+                return $tokens;
+            }
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -800,6 +1034,7 @@ class NimbusecAPI {
      * No return value.
      *
      * @param int $userID - The user's assigned ID (must be valid)
+     * @throws Exception When having troubles while sending the curl request
      */
     function deleteAgentToken ( $tokenID ) {
 
@@ -814,10 +1049,14 @@ class NimbusecAPI {
         // -- Get the usable url for the request --
         $requestUrl = $request->to_url ();
         
-        // -- Run the cUrl request --
-        // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
-        //    through "substr" which for its part fails it returns boolean false --
-        $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        try {
+            // -- Run the cUrl request --
+            // -- NOTE: This request would basically return nothing, but as the empty HTTP Response body string will be cut off from the header string
+            //    through "substr" which for its part fails it returns boolean false --
+            $this->client->send_request ( $request->get_normalized_http_method (), $requestUrl );
+        }catch (Exception $e){
+            throw new Exception ("[" . __METHOD__ . "]: {$e->getMessage()}");
+        }
     }
 
     /**
@@ -840,9 +1079,4 @@ class NimbusecAPI {
         return array_key_exists ( $error, $errors ) ? $errors[$error] : "Unknown error ({$error})";
     }
 }
-
-class NimbusecException extends Exception {
-    // pass
-}
-
 ?>
